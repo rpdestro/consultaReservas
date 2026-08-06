@@ -109,7 +109,6 @@ body {
     color: #4361ee;
 }
 
-/* TAG 'FONTE' DESTACADA */
 .kpi-fonte-tag {
     font-size: 12px;
     background-color: #e0e7ff;
@@ -254,9 +253,9 @@ tbody tr:hover { background-color: #f8fafc; }
 /* CONFIGURAÇÕES ESPECÍFICAS PARA IMPRESSÃO */
 @media print {
     body { background: white; margin: 0; padding: 0; }
-    .app-header, .top-sections, .col-acoes, .header-filter-row, h3, #btnCarregarMais, .dashboard-panel { display: none !important; }
+    .app-header, .top-sections, .col-acoes, .header-filter-row, h3, #btnCarregarMais { display: none !important; }
     
-    .banner-container { display: block !important; margin-bottom: 20px; }
+    .banner-container { display: block !important; margin-bottom: 15px; }
     .card-banner { 
         background: #f8fafc !important; 
         color: #0f172a !important; 
@@ -268,6 +267,38 @@ tbody tr:hover { background-color: #f8fafc; }
     .card-banner h4 { color: #475569 !important; font-size: 11px; margin-bottom: 4px; }
     .card-banner .valor { color: #0f172a !important; font-size: 22px; }
 
+    /* Exibe o painel de banners/cards na 1ª página da impressão */
+    .dashboard-panel {
+        display: block !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .dashboard-grid-kpi {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+
+    .kpi-card {
+        border: 1px solid #cbd5e1 !important;
+        border-left: 5px solid #8b5cf6 !important;
+        box-shadow: none !important;
+        padding: 12px !important;
+        break-inside: avoid;
+    }
+
+    /* FORÇA A TABELA A INICIAR A PARTIR DA 2ª PÁGINA */
+    .print-tabela-wrapper {
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-top: 20px;
+    }
+
     .container { box-shadow: none; padding: 0; max-width: 100%; margin: 0; }
     .table-container { max-height: none !important; min-height: auto !important; padding-bottom: 0 !important; border: none; overflow: visible; }
     
@@ -276,7 +307,6 @@ tbody tr:hover { background-color: #f8fafc; }
     thead th { position: static !important; background-color: #f1f5f9 !important; color: #000 !important; }
     
     .linha-subtotal { display: none !important; }
-    body.print-somente-saldo .col-nao-saldo { display: none !important; }
 
     th:nth-child(2), td:nth-child(2) { width: 1.5cm !important; text-align: center; } 
     th:nth-child(3), td:nth-child(3) { width: 1.0cm !important; text-align: center; } 

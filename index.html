@@ -50,56 +50,59 @@
         </div>
     </div>
 
-    <div class="table-header-flex">
-        <h3 class="table-heading">Dados do Sistema Fiorilli</h3>
-        <span id="infoRegistros" class="info-registros"></span>
-    </div>
+    <!-- Bloco da Tabela (Forçado para a 2ª página na impressão) -->
+    <div class="print-tabela-wrapper">
+        <div class="table-header-flex">
+            <h3 class="table-heading">Dados do Sistema Fiorilli</h3>
+            <span id="infoRegistros" class="info-registros"></span>
+        </div>
 
-    <div class="table-container">
-        <table id="tabelaDados">
-            <thead>
-                <tr>
-                    <th class="col-acoes header-center">Ações</th>
-                    <th class="col-nao-saldo col-print-data header-center">Data</th>
-                    <th class="col-nao-saldo col-print-reserva header-center">Reserva</th>
-                    <th class="col-nao-saldo col-print-historico header-center">Histórico</th>
-                    <th class="col-nao-saldo col-print-ficha header-center">Ficha</th>
-                    <th class="col-nao-saldo col-print-uo header-center">UO</th>
-                    <th class="col-nao-saldo col-print-natureza header-center">Natureza Desp.</th>
-                    <th class="col-nao-saldo col-print-ue header-center">UE</th>
-                    <th class="col-nao-saldo col-print-processo header-center">Processo</th>
-                    <th class="col-nao-saldo col-print-vlr-reserva header-center">Valor Reserva</th>
-                    <th class="col-nao-saldo col-print-fonte header-center">Fonte</th>
-                    <th class="col-nao-saldo col-print-sld-reserva header-center">Saldo Reserva</th>
-                    <th class="col-saldo-atual col-print-sld-atual header-center">Saldo Atual</th>
-                    <th class="col-nao-saldo col-print-vlr-emp header-center">Valor Empenhado</th>
-                </tr>
-                <tr class="header-filter-row">
-                    <th></th>
-                    <th><div id="filtro_Data" class="multi-select" data-campo="Data"></div></th>
-                    <th><div id="filtro_Reserva" class="multi-select" data-campo="Reserva"></div></th>
-                    <th><div id="filtro_Historico" class="multi-select" data-campo="Historico"></div></th>
-                    <th><div id="filtro_Ficha" class="multi-select" data-campo="Ficha"></div></th>
-                    <th><div id="filtro_UO" class="multi-select" data-campo="UO"></div></th>
-                    <th><div id="filtro_NaturezaDespesa" class="multi-select" data-campo="NaturezaDespesa"></div></th>
-                    <th><div id="filtro_UE" class="multi-select" data-campo="UE"></div></th>
-                    <th><div id="filtro_Processo" class="multi-select" data-campo="Processo"></div></th>
-                    <th><div id="filtro_ValorReserva" class="multi-select" data-campo="ValorReserva"></div></th>
-                    <th><div id="filtro_Fonte" class="multi-select" data-campo="Fonte"></div></th>
-                    <th><div id="filtro_SaldoReserva" class="multi-select" data-campo="SaldoReserva"></div></th>
-                    <th><div id="filtro_SaldoAtual" class="multi-select" data-campo="SaldoAtual"></div></th>
-                    <th><div id="filtro_ValorEmpenhado" class="multi-select" data-campo="ValorEmpenhado"></div></th>
-                </tr>
-            </thead>
-            <tbody id="tabelaCorpo">
-                <tr>
-                    <td colspan="14" class="empty-table-message">
-                        Nenhum arquivo carregado. Selecione um arquivo Excel acima para começar.
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot id="tabelaRodapeSubtotal" class="linha-subtotal"></tfoot>
-        </table>
+        <div class="table-container">
+            <table id="tabelaDados">
+                <thead>
+                    <tr>
+                        <th class="col-acoes header-center">Ações</th>
+                        <th class="col-nao-saldo col-print-data header-center">Data</th>
+                        <th class="col-nao-saldo col-print-reserva header-center">Reserva</th>
+                        <th class="col-nao-saldo col-print-historico header-center">Histórico</th>
+                        <th class="col-nao-saldo col-print-ficha header-center">Ficha</th>
+                        <th class="col-nao-saldo col-print-uo header-center">UO</th>
+                        <th class="col-nao-saldo col-print-natureza header-center">Natureza Desp.</th>
+                        <th class="col-nao-saldo col-print-ue header-center">UE</th>
+                        <th class="col-nao-saldo col-print-processo header-center">Processo</th>
+                        <th class="col-nao-saldo col-print-vlr-reserva header-center">Valor Reserva</th>
+                        <th class="col-nao-saldo col-print-fonte header-center">Fonte</th>
+                        <th class="col-nao-saldo col-print-sld-reserva header-center">Saldo Reserva</th>
+                        <th class="col-saldo-atual col-print-sld-atual header-center">Saldo Atual</th>
+                        <th class="col-nao-saldo col-print-vlr-emp header-center">Valor Empenhado</th>
+                    </tr>
+                    <tr class="header-filter-row">
+                        <th></th>
+                        <th><div id="filtro_Data" class="multi-select" data-campo="Data"></div></th>
+                        <th><div id="filtro_Reserva" class="multi-select" data-campo="Reserva"></div></th>
+                        <th><div id="filtro_Historico" class="multi-select" data-campo="Historico"></div></th>
+                        <th><div id="filtro_Ficha" class="multi-select" data-campo="Ficha"></div></th>
+                        <th><div id="filtro_UO" class="multi-select" data-campo="UO"></div></th>
+                        <th><div id="filtro_NaturezaDespesa" class="multi-select" data-campo="NaturezaDespesa"></div></th>
+                        <th><div id="filtro_UE" class="multi-select" data-campo="UE"></div></th>
+                        <th><div id="filtro_Processo" class="multi-select" data-campo="Processo"></div></th>
+                        <th><div id="filtro_ValorReserva" class="multi-select" data-campo="ValorReserva"></div></th>
+                        <th><div id="filtro_Fonte" class="multi-select" data-campo="Fonte"></div></th>
+                        <th><div id="filtro_SaldoReserva" class="multi-select" data-campo="SaldoReserva"></div></th>
+                        <th><div id="filtro_SaldoAtual" class="multi-select" data-campo="SaldoAtual"></div></th>
+                        <th><div id="filtro_ValorEmpenhado" class="multi-select" data-campo="ValorEmpenhado"></div></th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo">
+                    <tr>
+                        <td colspan="14" class="empty-table-message">
+                            Nenhum arquivo carregado. Selecione um arquivo Excel acima para começar.
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot id="tabelaRodapeSubtotal" class="linha-subtotal"></tfoot>
+            </table>
+        </div>
     </div>
 </div>
 

@@ -409,7 +409,7 @@ function limparDadosCarregados() {
     }
 }
 
-// FUNÇÃO DE PROCESSAMENTO DO PAINEL DASHBOARD (APENAS CARDS DE UO + FONTE DESTACADA)
+// FUNÇÃO DE PROCESSAMENTO DO PAINEL DASHBOARD (CARDS ORDENADOS POR UO E DEPOIS POR FONTE)
 function atualizarPainelDashboard(dadosFiltrados) {
     const elPainel = document.getElementById('painelDashboard');
     const containerCards = document.getElementById('containerCardsDinamicos');
@@ -442,9 +442,14 @@ function atualizarPainelDashboard(dadosFiltrados) {
         combinacoesUOFonte[chaveComposta].valor += vReserva;
     });
 
-    let htmlCards = '';
-    const listaCombinacoes = Object.values(combinacoesUOFonte).sort((a, b) => b.valor - a.valor);
+    // Ordenação hierárquica: 1º por Secretaria (UO 4 dígitos) e 2º por Fonte
+    const listaCombinacoes = Object.values(combinacoesUOFonte).sort((a, b) => {
+        const compSec = a.sec.localeCompare(b.sec, undefined, { numeric: true, sensitivity: 'base' });
+        if (compSec !== 0) return compSec;
+        return a.fonte.localeCompare(b.fonte, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
+    let htmlCards = '';
     listaCombinacoes.forEach(item => {
         htmlCards += `
             <div class="kpi-card">
