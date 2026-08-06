@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Página para consulta de Reservas Orçamentárias, Prefeitura de Botucatu">
+    <meta name="author" content="Renato Pinheiro Destro">
+    <title>Reservas Orçamentárias</title>
+    <!-- Importação do CSS Externo -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca SheetJS externa para ler/exportar Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="header-title-container">
+        <h1>Consulta de Reservas Orçamentárias</h1>
+    </div>
+    <div class="header-subtitle">V2.1</div>
+</header>
+
+<div class="container">
+    <!-- Banner Principal Fixo -->
+    <div class="banner-container">
+        <div class="card-banner roxo">
+            <h4>Valor Total da Reserva (Filtrado)</h4>
+            <div class="valor" id="bannerValorReserva">R$ 0,00</div>
+        </div>
+    </div>
+    
+    <!-- PAINEL DASHBOARD DE RESUMO FILTRADO -->
+    <div class="dashboard-panel" id="painelDashboard" style="display: none;">
+        <!-- Contêiner dinâmico para os cards de Secretaria + Fonte + Valor -->
+        <div class="dashboard-grid-kpi" id="containerCardsDinamicos"></div>
+    </div>
+
+    <div class="top-sections">
+        <div class="import-section">
+            <h3 class="section-title">1. Carregar Arquivo</h3>
+            <input type="file" id="uploadExcel" accept=".xls,.xlsx,.csv" class="upload-input">
+        </div>
+        <div class="filter-section">
+            <h3 class="section-title">2. Ações do Sistema</h3>
+            <button type="button" class="btn btn-success" id="btnNovaReserva">+ Nova Reserva</button>
+            <button type="button" class="btn btn-danger" id="btnLimparFiltros">Limpar Filtros</button>
+            <button type="button" class="btn btn-danger" id="btnLimparDados">Limpar Dados</button>
+            <button type="button" class="btn" id="btnExportar">Exportar(XLSX)</button>
+            <button type="button" class="btn btn-secondary" id="btnImprimir">Imprimir</button>
+        </div>
+    </div>
+
+    <div class="table-header-flex">
+        <h3 class="table-heading">Dados do Sistema Fiorilli</h3>
+        <span id="infoRegistros" class="info-registros"></span>
+    </div>
+
+    <div class="table-container">
+        <table id="tabelaDados">
+            <thead>
+                <tr>
+                    <th class="col-acoes header-center">Ações</th>
+                    <th class="col-nao-saldo col-print-data header-center">Data</th>
+                    <th class="col-nao-saldo col-print-reserva header-center">Reserva</th>
+                    <th class="col-nao-saldo col-print-historico header-center">Histórico</th>
+                    <th class="col-nao-saldo col-print-ficha header-center">Ficha</th>
+                    <th class="col-nao-saldo col-print-uo header-center">UO</th>
+                    <th class="col-nao-saldo col-print-natureza header-center">Natureza Desp.</th>
+                    <th class="col-nao-saldo col-print-ue header-center">UE</th>
+                    <th class="col-nao-saldo col-print-processo header-center">Processo</th>
+                    <th class="col-nao-saldo col-print-vlr-reserva header-center">Valor Reserva</th>
+                    <th class="col-nao-saldo col-print-fonte header-center">Fonte</th>
+                    <th class="col-nao-saldo col-print-sld-reserva header-center">Saldo Reserva</th>
+                    <th class="col-saldo-atual col-print-sld-atual header-center">Saldo Atual</th>
+                    <th class="col-nao-saldo col-print-vlr-emp header-center">Valor Empenhado</th>
+                </tr>
+                <tr class="header-filter-row">
+                    <th></th>
+                    <th><div id="filtro_Data" class="multi-select" data-campo="Data"></div></th>
+                    <th><div id="filtro_Reserva" class="multi-select" data-campo="Reserva"></div></th>
+                    <th><div id="filtro_Historico" class="multi-select" data-campo="Historico"></div></th>
+                    <th><div id="filtro_Ficha" class="multi-select" data-campo="Ficha"></div></th>
+                    <th><div id="filtro_UO" class="multi-select" data-campo="UO"></div></th>
+                    <th><div id="filtro_NaturezaDespesa" class="multi-select" data-campo="NaturezaDespesa"></div></th>
+                    <th><div id="filtro_UE" class="multi-select" data-campo="UE"></div></th>
+                    <th><div id="filtro_Processo" class="multi-select" data-campo="Processo"></div></th>
+                    <th><div id="filtro_ValorReserva" class="multi-select" data-campo="ValorReserva"></div></th>
+                    <th><div id="filtro_Fonte" class="multi-select" data-campo="Fonte"></div></th>
+                    <th><div id="filtro_SaldoReserva" class="multi-select" data-campo="SaldoReserva"></div></th>
+                    <th><div id="filtro_SaldoAtual" class="multi-select" data-campo="SaldoAtual"></div></th>
+                    <th><div id="filtro_ValorEmpenhado" class="multi-select" data-campo="ValorEmpenhado"></div></th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo">
+                <tr>
+                    <td colspan="14" class="empty-table-message">
+                        Nenhum arquivo carregado. Selecione um arquivo Excel acima para começar.
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot id="tabelaRodapeSubtotal" class="linha-subtotal"></tfoot>
+        </table>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 20px 0;">
+    <button type="button" id="btnCarregarMais" class="btn btn-primary" style="display: none; padding: 10px 20px; font-weight: bold; cursor: pointer;">
+        Carregar Mais 50 Linhas
+    </button>
+</div>
+
+<!-- Modal de Formulário -->
+<div class="modal-overlay" id="modalFormulario">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Nova Reserva</h3>
+            <button type="button" class="modal-close-btn" id="btnFecharModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formReserva">
+                <input type="hidden" id="editIndex" value="-1">
+                
+                <div class="form-section-title">Informações Gerais</div>
+                <div class="form-grid-modern">
+                    <div class="form-group">
+                        <label for="form_Data">Data</label>
+                        <div class="date-input-container">
+                            <input type="date" id="form_Data">
+                            <button type="button" class="btn btn-secondary btn-today" id="btnDataHoje" title="Preencher com a data de hoje">Hoje</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="form_Reserva">Reserva</label>
+                        <input type="text" id="form_Reserva" placeholder="Nº da Reserva">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_Processo">Processo</label>
+                        <input type="text" id="form_Processo" placeholder="Nº do Processo">
+                    </div>
+                    <div class="form-group span-2">
+                        <label for="form_Historico">Histórico</label>
+                        <input type="text" id="form_Historico" placeholder="Descrição do histórico...">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_Ficha">Ficha</label>
+                        <input type="text" id="form_Ficha" placeholder="Ficha">
+                    </div>
+                </div>
+
+                <div class="form-section-title">Estrutura Orçamentária</div>
+                <div class="form-grid-modern">
+                    <div class="form-group">
+                        <label for="form_UO">UO (Unidade Orçamentária)</label>
+                        <input type="text" id="form_UO" placeholder="UO">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_UE">UE (Unidade Executora)</label>
+                        <input type="text" id="form_UE" placeholder="UE">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_Fonte">Fonte</label>
+                        <input type="text" id="form_Fonte" placeholder="Fonte">
+                    </div>
+                    <div class="form-group span-2">
+                        <label for="form_NaturezaDespesa">Natureza de Despesa</label>
+                        <input type="text" id="form_NaturezaDespesa" placeholder="Natureza de Despesa">
+                    </div>
+                </div>
+
+                <div class="form-section-title">Valores Financeiros</div>
+                <div class="form-grid-modern">
+                    <div class="form-group">
+                        <label for="form_ValorReserva">Valor Reserva</label>
+                        <input type="text" id="form_ValorReserva" placeholder="0,00" class="input-money">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_SaldoReserva">Saldo Reserva</label>
+                        <input type="text" id="form_SaldoReserva" placeholder="0,00" class="input-money">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_SaldoAtual">Saldo Atual</label>
+                        <input type="text" id="form_SaldoAtual" placeholder="0,00" class="input-money">
+                    </div>
+                    <div class="form-group">
+                        <label for="form_ValorEmpenhado">Valor Empenhado</label>
+                        <input type="text" id="form_ValorEmpenhado" placeholder="0,00" class="input-money">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelarModal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btnSalvarReserva">Salvar Reserva</button>
+        </div>
+    </div>
+</div>
+
+<!-- Importação da Lógica JS Externa -->
+<script src="script.js"></script>
+</body>
+</html>
