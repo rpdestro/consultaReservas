@@ -6,33 +6,40 @@
     <meta name="description" content="Página para consulta de Reservas Orçamentárias, Prefeitura de Botucatu">
     <meta name="author" content="Renato Pinheiro Destro">
     <title>Reservas Orçamentárias</title>
-    <!-- Importação do CSS Externo -->
     <link rel="stylesheet" href="style.css">
-    <!-- Biblioteca SheetJS externa para ler/exportar Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <header class="app-header">
     <div class="header-title-container">
-        <h1>Consulta de Reservas Orçamentárias</h1>
+        <h1>Departamento de Planejamento e Orçamento >> Consulta Reservas</h1>
     </div>
-    <div class="header-subtitle">V2.1</div>
+    <div class="header-actions">
+        <!-- BOTÃO DE MODO ESCURO -->
+        <button type="button" id="btnDarkMode" class="btn-theme-toggle" title="Alternar tema">🌙 Escuro</button>
+        <div class="header-subtitle">V2.4</div>
+    </div>
 </header>
 
 <div class="container">
-    <!-- Banner Principal Fixo -->
-    <div class="banner-container">
-        <div class="card-banner roxo">
-            <h4>Valor Total da Reserva (Filtrado)</h4>
-            <div class="valor" id="bannerValorReserva">R$ 0,00</div>
-        </div>
-    </div>
     
-    <!-- PAINEL DASHBOARD DE RESUMO FILTRADO -->
-    <div class="dashboard-panel" id="painelDashboard" style="display: none;">
-        <!-- Contêiner dinâmico para os cards de Secretaria + Fonte + Valor -->
-        <div class="dashboard-grid-kpi" id="containerCardsDinamicos"></div>
+    <div class="dashboard-layout">
+        <div class="dashboard-left">
+            <div class="card-banner roxo">
+                <h4>Valor Total da Reserva (Filtrado)</h4>
+                <div class="valor" id="bannerValorReserva">R$ 0,00</div>
+            </div>
+            
+            <div class="dashboard-chart-container" id="painelGrafico" style="display: none;">
+                <canvas id="graficoReservas"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-panel" id="painelDashboard" style="display: none;">
+            <div class="dashboard-grid-kpi" id="containerCardsDinamicos"></div>
+        </div>
     </div>
 
     <div class="top-sections">
@@ -50,7 +57,6 @@
         </div>
     </div>
 
-    <!-- Bloco da Tabela (Forçado para a 2ª página na impressão) -->
     <div class="print-tabela-wrapper">
         <div class="table-header-flex">
             <h3 class="table-heading">Dados do Sistema Fiorilli</h3>
@@ -112,7 +118,24 @@
     </button>
 </div>
 
-<!-- Modal de Formulário -->
+<!-- Modal de Detalhes da Reserva -->
+<div class="modal-overlay" id="modalDetalhes">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>Ficha de Reserva</h3>
+            <button type="button" class="modal-close-btn" id="btnFecharDetalhes">&times;</button>
+        </div>
+        <div class="modal-body print-area" id="conteudoDetalhes">
+            <!-- Injetado via JS -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="window.print()">Imprimir Ficha</button>
+            <button type="button" class="btn btn-primary" id="btnFecharDetalhesBottom">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Formulário Edição -->
 <div class="modal-overlay" id="modalFormulario">
     <div class="modal-content">
         <div class="modal-header">
@@ -198,7 +221,6 @@
     </div>
 </div>
 
-<!-- Importação da Lógica JS Externa -->
 <script src="script.js"></script>
 </body>
 </html>

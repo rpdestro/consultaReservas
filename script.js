@@ -3,6 +3,36 @@ const camposDeFiltro = ["Data", "Reserva", "Historico", "Ficha", "UO", "Natureza
 let filtrosAplicados = {};
 let limiteLinhasExibidas = 50;
 
+let graficoInstancia = null; 
+
+const dicionarioUO = {
+    "0201": "GABINETE",
+    "0202": "HABITAÇÃO",
+    "0204": "EDUCAÇÃO",
+    "0206": "SAÚDE",
+    "0207": "ESPORTES",
+    "0208": "SEGURANÇA",
+    "0209": "ASSIST. SOCIAL",
+    "0210": "FUNDO ASSIST. SOCIAL",
+    "0211": "CULTURA",
+    "0212": "INFRAESTRUTURA",
+    "0232": "PROCURADORIA",
+    "0234": "DESENVOLVIMENTO",
+    "0235": "ZELADORIA",
+    "0236": "GOVERNO",
+    "0237": "ADMINISTRAÇÃO",
+    "0238": "FAZENDA",
+    "0239": "COMUNICAÇÃO",
+    "0240": "TURISMO",
+    "0241": "MEIO AMBIENTE",
+    "0242": "AGRICULTURA"
+};
+
+function obterNomeSecretaria(codigoUO) {
+    let cod = String(codigoUO).replace(/\D/g, '').substring(0, 4);
+    return dicionarioUO[cod] ? `${cod}-${dicionarioUO[cod]}` : `UO ${codigoUO}`;
+}
+
 const mapaColunas = {
     'B': 1, 'Q': 16, 'R': 17, 'W': 22, 'Y': 24, 
     'AJ': 35, 'AS': 44, 'BC': 54, 'BD': 55, 
@@ -16,8 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btnLimparDados').addEventListener('click', limparDadosCarregados);
     document.getElementById('btnExportar').addEventListener('click', () => exportarExcel(true));
     document.getElementById('btnImprimir').addEventListener('click', () => window.print());
+    
+    // Modais
     document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
     document.getElementById('btnCancelarModal').addEventListener('click', fecharModal);
+    document.getElementById('btnFecharDetalhes').addEventListener('click', fecharModalDetalhes);
+    document.getElementById('btnFecharDetalhesBottom').addEventListener('click', fecharModalDetalhes);
+    
     document.getElementById('btnDataHoje').addEventListener('click', preencherDataHoje);
     document.getElementById('btnSalvarReserva').addEventListener('click', salvarReserva);
     
@@ -42,6 +77,21 @@ document.addEventListener("DOMContentLoaded", () => {
             e.returnValue = ''; 
         }
     });
+
+    // Lógica do MODO ESCURO
+    const btnDark = document.getElementById('btnDarkMode');
+    btnDark.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        btnDark.innerText = isDark ? '☀️ Claro' : '🌙 Escuro';
+        
+        // Atualizar cores do gráfico se ele estiver renderizado
+        if (graficoInstancia) {
+            graficoInstancia.options.plugins.title.color = isDark ? '#f8fafc' : '#1e293b';
+            graficoInstancia.options.plugins.legend.labels.color = isDark ? '#cbd5e1' : '#64748b';
+            graficoInstancia.update();
+        }
+    });
 });
 
 function aplicarMascaraMoeda(input) {
@@ -58,14 +108,10 @@ function formatarDataExcel(val) {
     if (!val) return "";
     if (typeof val === 'number') {
         const dataObj = XLSX.SSF.parse_date_code(val);
-        if (dataObj) {
-            return `${String(dataObj.d).padStart(2, '0')}/${String(dataObj.m).padStart(2, '0')}/${dataObj.y}`;
-        }
+        if (dataObj) return `${String(dataObj.d).padStart(2, '0')}/${String(dataObj.m).padStart(2, '0')}/${dataObj.y}`;
     }
     let str = String(val).trim();
-    if (val instanceof Date && !isNaN(val)) {
-        return `${String(val.getDate()).padStart(2, '0')}/${String(val.getMonth() + 1).padStart(2, '0')}/${val.getFullYear()}`;
-    }
+    if (val instanceof Date && !isNaN(val)) return `${String(val.getDate()).padStart(2, '0')}/${String(val.getMonth() + 1).padStart(2, '0')}/${val.getFullYear()}`;
     if (str.includes('-') && str.length >= 10) {
         const partes = str.split('T')[0].split('-');
         if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -89,26 +135,15 @@ function processarUploadExcel(e) {
     reader.onload = function(e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {
-                type: 'array', 
-                cellDates: true,
-                raw: false
-            });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: false });
 
-            if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
-                alert("O arquivo selecionado está vazio ou em um formato incompatível.");
-                return;
-            }
+            if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) return alert("Arquivo incompatível.");
 
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             let jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
             
             bufferReservas = [];
-
-            if (jsonData.length === 0) {
-                alert("Nenhum dado foi encontrado nas linhas do arquivo.");
-                return;
-            }
+            if (jsonData.length === 0) return alert("Nenhum dado encontrado.");
 
             for (let i = 0; i < jsonData.length; i++) {
                 let linha = jsonData[i];
@@ -116,7 +151,6 @@ function processarUploadExcel(e) {
 
                 let regData = linha[mapaColunas['B']] !== undefined ? linha[mapaColunas['B']] : (linha[1] || "");
                 let regReserva = linha[mapaColunas['BT']] !== undefined ? linha[mapaColunas['BT']] : (linha[0] || "");
-                
                 let dataFormatada = formatarDataExcel(regData);
                 let reservaTxt = String(regReserva).trim();
 
@@ -144,21 +178,15 @@ function processarUploadExcel(e) {
             gerarFiltrosMultiplos();
             renderizarTabela();
 
-            if (bufferReservas.length === 0) {
-                alert("Arquivo lido, porém nenhuma linha de reserva válida foi identificada.");
-            }
         } catch (err) {
-            console.error("Erro ao processar arquivo:", err);
-            alert("Erro ao ler o arquivo selecionado. Verifique se o formato é válido.");
+            console.error(err);
+            alert("Erro ao ler o arquivo.");
         }
     };
-
     reader.readAsArrayBuffer(file);
 }
 
-function dataIsoEInvalida(data, reserva) {
-    return (data.toLowerCase().includes("data") || reserva.toLowerCase().includes("reserva"));
-}
+function dataIsoEInvalida(data, reserva) { return (data.toLowerCase().includes("data") || reserva.toLowerCase().includes("reserva")); }
 
 function converterParaNumero(val) {
     if (typeof val === 'number') return val;
@@ -181,36 +209,24 @@ function gerarFiltrosMultiplos() {
         const container = document.getElementById('filtro_' + campo);
         if(!container) return;
 
-        const valoresUnicos = [...new Set(bufferReservas.map(item => String(item[campo] || '').trim()))]
-                              .filter(val => val !== '').sort();
+        const valoresUnicos = [...new Set(bufferReservas.map(item => String(item[campo] || '').trim()))].filter(val => val !== '').sort();
 
         let html = `
             <button type="button" class="ms-btn" id="btn_drop_${campo}">
                 <span id="txt_${campo}">Todos</span> <span>▾</span>
             </button>
             <div class="ms-dropdown" id="drop_${campo}">
-                <div class="ms-search">
-                    <input type="text" placeholder="Pesquisar...">
-                </div>
+                <div class="ms-search"><input type="text" placeholder="Pesquisar..."></div>
                 <div class="ms-options-container">
-                    <label class="ms-select-all-label">
-                        <input type="checkbox" class="ms-select-all" data-campo="${campo}"> 
-                        (Selecionar Tudo)
-                    </label>
+                    <label class="ms-select-all-label"><input type="checkbox" class="ms-select-all" data-campo="${campo}"> (Selecionar Tudo)</label>
         `;
 
         valoresUnicos.forEach(val => {
             const valEscaped = val.replace(/"/g, '&quot;');
-            html += `
-                <label class="ms-item-label">
-                    <input type="checkbox" class="ms-item ms-item-${campo}" value="${valEscaped}"> 
-                    ${val}
-                </label>
-            `;
+            html += `<label class="ms-item-label"><input type="checkbox" class="ms-item ms-item-${campo}" value="${valEscaped}"> ${val}</label>`;
         });
 
-        html += `
-                </div>
+        html += `</div>
                 <div class="ms-footer">
                     <button type="button" class="btn btn-success btn-ok">OK</button>
                     <button type="button" class="btn btn-danger btn-cancelar">Cancelar</button>
@@ -218,22 +234,12 @@ function gerarFiltrosMultiplos() {
             </div>`;
         container.innerHTML = html;
         
-        const btnDrop = document.getElementById(`btn_drop_${campo}`);
-        btnDrop.addEventListener('click', (e) => toggleDropdown(campo, e));
-        
-        const inputBusca = container.querySelector('.ms-search input');
-        inputBusca.addEventListener('keyup', (e) => filtrarDropdownPesquisa(campo, e.target));
-        
-        const masterCb = container.querySelector('.ms-select-all');
-        masterCb.addEventListener('change', (e) => toggleSelectAll(campo, e.target));
-        
-        container.querySelectorAll(`.ms-item-${campo}`).forEach(cb => {
-            cb.addEventListener('change', () => verificarSelectAll(campo));
-        });
-        
+        container.querySelector(`#btn_drop_${campo}`).addEventListener('click', (e) => toggleDropdown(campo, e));
+        container.querySelector('.ms-search input').addEventListener('keyup', (e) => filtrarDropdownPesquisa(campo, e.target));
+        container.querySelector('.ms-select-all').addEventListener('change', (e) => toggleSelectAll(campo, e.target));
+        container.querySelectorAll(`.ms-item-${campo}`).forEach(cb => cb.addEventListener('change', () => verificarSelectAll(campo)));
         container.querySelector('.btn-ok').addEventListener('click', () => aplicarFiltro(campo));
         container.querySelector('.btn-cancelar').addEventListener('click', () => fecharDropdown(campo));
-
         atualizarTextoBotaoFiltro(campo);
     });
 }
@@ -243,10 +249,7 @@ function toggleDropdown(campo, event) {
     const drop = document.getElementById('drop_' + campo);
     const estaAberto = drop.classList.contains('show');
     document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('show'));
-    if (!estaAberto) {
-        sincronizarCheckboxesComFiltroAplicado(campo);
-        drop.classList.add('show');
-    }
+    if (!estaAberto) { sincronizarCheckboxesComFiltroAplicado(campo); drop.classList.add('show'); }
 }
 
 function fecharDropdown(campo) {
@@ -265,30 +268,24 @@ function sincronizarCheckboxesComFiltroAplicado(campo) {
     } else {
         let todos = true;
         checkboxes.forEach(cb => {
-            if (valoresPermitidos.includes(cb.value)) {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-                todos = false;
-            }
+            if (valoresPermitidos.includes(cb.value)) cb.checked = true;
+            else { cb.checked = false; todos = false; }
         });
         if(master) master.checked = todos;
     }
 }
 
 function toggleSelectAll(campo, masterCheckbox) {
-    const checkboxes = document.querySelectorAll(`.ms-item-${campo}`);
-    checkboxes.forEach(cb => {
+    document.querySelectorAll(`.ms-item-${campo}`).forEach(cb => {
         if(cb.closest('label').style.display !== 'none') cb.checked = masterCheckbox.checked;
     });
 }
 
 function verificarSelectAll(campo) {
-    const checkboxes = document.querySelectorAll(`.ms-item-${campo}`);
     const master = document.querySelector(`.ms-select-all[data-campo="${campo}"]`);
-    let todosMarcados = true;
-    checkboxes.forEach(cb => { if(!cb.checked) todosMarcados = false; });
-    if(master) master.checked = todosMarcados;
+    let todos = true;
+    document.querySelectorAll(`.ms-item-${campo}`).forEach(cb => { if(!cb.checked) todos = false; });
+    if(master) master.checked = todos;
 }
 
 function filtrarDropdownPesquisa(campo, input) {
@@ -302,19 +299,16 @@ function atualizarTextoBotaoFiltro(campo) {
     const checkboxes = document.querySelectorAll(`.ms-item-${campo}`);
     const txtBox = document.getElementById(`txt_${campo}`);
     const btnBox = document.getElementById(`btn_drop_${campo}`);
-    const valoresPermitidos = filtrosAplicados[campo];
+    const val = filtrosAplicados[campo];
 
-    if (!valoresPermitidos || valoresPermitidos.length === 0) {
+    if (!val || val.length === 0 || val.length === checkboxes.length) {
         txtBox.innerText = "Todos";
         if(btnBox) btnBox.classList.remove('active-filter');
-    } else if (valoresPermitidos.length === checkboxes.length) {
-        txtBox.innerText = "Todos";
-        if(btnBox) btnBox.classList.remove('active-filter');
-    } else if (valoresPermitidos.length === 1) {
-        txtBox.innerText = valoresPermitidos[0];
+    } else if (val.length === 1) {
+        txtBox.innerText = val[0];
         if(btnBox) btnBox.classList.add('active-filter');
     } else {
-        txtBox.innerText = valoresPermitidos.length + " selecionados";
+        txtBox.innerText = val.length + " selecionados";
         if(btnBox) btnBox.classList.add('active-filter');
     }
 }
@@ -324,11 +318,8 @@ function aplicarFiltro(campo) {
     const valoresMarcados = [];
     checkboxes.forEach(cb => { if(cb.checked) valoresMarcados.push(cb.value); });
 
-    if (valoresMarcados.length === checkboxes.length || valoresMarcados.length === 0) {
-        delete filtrosAplicados[campo];
-    } else {
-        filtrosAplicados[campo] = valoresMarcados;
-    }
+    if (valoresMarcados.length === checkboxes.length || valoresMarcados.length === 0) delete filtrosAplicados[campo];
+    else filtrosAplicados[campo] = valoresMarcados;
 
     limiteLinhasExibidas = 50; 
     atualizarTextoBotaoFiltro(campo);
@@ -339,15 +330,13 @@ function aplicarFiltro(campo) {
 function obterDadosFiltrados() {
     return bufferReservas.filter(reg => {
         for (let campo in filtrosAplicados) {
-            const valoresPermitidos = filtrosAplicados[campo];
-            if (!valoresPermitidos || valoresPermitidos.length === 0) continue;
+            const valPermitidos = filtrosAplicados[campo];
+            if (!valPermitidos || valPermitidos.length === 0) continue;
             const valorLinha = String(reg[campo] || '').trim().toLowerCase();
             let encontrou = false;
-            for (let i = 0; i < valoresPermitidos.length; i++) {
-                const valorPermitidoSanitizado = valoresPermitidos[i].replace(/&quot;/g, '"').trim().toLowerCase();
-                if (valorLinha === valorPermitidoSanitizado) {
-                    encontrou = true;
-                    break;
+            for (let i = 0; i < valPermitidos.length; i++) {
+                if (valorLinha === valPermitidos[i].replace(/&quot;/g, '"').trim().toLowerCase()) {
+                    encontrou = true; break;
                 }
             }
             if (!encontrou) return false;
@@ -359,90 +348,120 @@ function obterDadosFiltrados() {
 function limparFiltros() { 
     filtrosAplicados = {};
     limiteLinhasExibidas = 50;
-    
     camposDeFiltro.forEach(campo => {
         const master = document.querySelector(`.ms-select-all[data-campo="${campo}"]`);
         if(master) master.checked = false;
-        
-        document.querySelectorAll(`.ms-item-${campo}`).forEach(cb => {
-            cb.checked = false;
-        });
-
+        document.querySelectorAll(`.ms-item-${campo}`).forEach(cb => cb.checked = false);
         const inputBusca = document.querySelector(`#drop_${campo} .ms-search input`);
         if (inputBusca) inputBusca.value = "";
-
-        document.querySelectorAll(`#drop_${campo} .ms-item-label`).forEach(label => {
-            label.style.display = '';
-        });
-        
+        document.querySelectorAll(`#drop_${campo} .ms-item-label`).forEach(l => l.style.display = '');
         atualizarTextoBotaoFiltro(campo);
     });
-    
     renderizarTabela(); 
 }
 
 function limparDadosCarregados() {
-    if (bufferReservas.length === 0) {
-        alert("Não há dados carregados para limpar.");
-        return;
-    }
-
-    if (confirm("Tem certeza que deseja apagar TODOS os dados carregados na tabela? Esta ação não pode ser desfeita.")) {
-        bufferReservas = []; 
-        limiteLinhasExibidas = 50;
-        
-        const uploadInput = document.getElementById('uploadExcel');
-        if (uploadInput) uploadInput.value = ""; 
-
+    if (bufferReservas.length === 0) return alert("Não há dados carregados para limpar.");
+    if (confirm("Apagar TODOS os dados carregados?")) {
+        bufferReservas = []; limiteLinhasExibidas = 50;
+        document.getElementById('uploadExcel').value = ""; 
         filtrosAplicados = {};
-
-        camposDeFiltro.forEach(campo => {
-            const container = document.getElementById('filtro_' + campo);
-            if (container) container.innerHTML = '';
-        });
-        
-        const infoEl = document.getElementById('infoRegistros');
-        if (infoEl) infoEl.innerText = "";
-
+        camposDeFiltro.forEach(campo => document.getElementById('filtro_' + campo).innerHTML = '');
+        document.getElementById('infoRegistros').innerText = "";
         renderizarTabela();
-        alert("Todos os dados e seleções de filtros foram limpos com sucesso.");
     }
 }
 
-// FUNÇÃO DE PROCESSAMENTO DO PAINEL DASHBOARD (CARDS ORDENADOS POR UO E DEPOIS POR FONTE)
+function renderizarGrafico(dadosFiltrados) {
+    const ctx = document.getElementById('graficoReservas');
+    if (!ctx) return;
+    if (graficoInstancia) graficoInstancia.destroy();
+    if (!dadosFiltrados || dadosFiltrados.length === 0) return;
+
+    const agrupamentoUO = {};
+    let totalFiltrado = 0;
+
+    dadosFiltrados.forEach(reg => {
+        let uo = String(reg.UO || "").replace(/\D/g, '').substring(0, 4);
+        if (!uo) uo = "N/A";
+        let valor = converterParaNumero(reg.ValorReserva);
+        if (!agrupamentoUO[uo]) agrupamentoUO[uo] = 0;
+        agrupamentoUO[uo] += valor;
+        totalFiltrado += valor;
+    });
+
+    const labels = Object.keys(agrupamentoUO).map(uo => obterNomeSecretaria(uo));
+    const valores = Object.values(agrupamentoUO);
+    const isDark = document.body.classList.contains('dark-theme');
+
+    graficoInstancia = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Valor', data: valores,
+                backgroundColor: ['#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', '#2ec4b6', '#ff9f1c', '#e71d36', '#fb8500', '#06d6a0', '#118ab2', '#073b4c'],
+                borderWidth: 1, hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 5, bottom: 15 } },
+            plugins: {
+                legend: { 
+                    position: 'bottom', 
+                    labels: { color: isDark ? '#cbd5e1' : '#64748b', font: { size: 10, family: "'Segoe UI', sans-serif" }, boxWidth: 12, padding: 8 } 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(c) {
+                            let pct = ((c.raw / totalFiltrado) * 100).toFixed(1);
+                            let val = c.raw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            return ` ${val} (${pct}%)`;
+                        }
+                    }
+                },
+                title: { 
+                    display: true, 
+                    text: 'Distribuição do Valor de Reserva por Secretaria', 
+                    color: isDark ? '#f8fafc' : '#1e293b',
+                    font: { size: 13, weight: '600' }, 
+                    padding: { bottom: 20 } 
+                }
+            }
+        }
+    });
+}
+
 function atualizarPainelDashboard(dadosFiltrados) {
     const elPainel = document.getElementById('painelDashboard');
+    const elGrafico = document.getElementById('painelGrafico');
     const containerCards = document.getElementById('containerCardsDinamicos');
+    
     if (!elPainel || !containerCards) return;
 
     if (!dadosFiltrados || dadosFiltrados.length === 0 || bufferReservas.length === 0) {
         elPainel.style.display = 'none';
+        if(elGrafico) elGrafico.style.display = 'none';
         return;
     }
 
     elPainel.style.display = 'block';
+    if(elGrafico) elGrafico.style.display = 'flex';
 
     const combinacoesUOFonte = {};
 
     dadosFiltrados.forEach(reg => {
         const vReserva = converterParaNumero(reg.ValorReserva);
-
-        let uoOriginal = String(reg.UO || "").trim();
-        let secChave = uoOriginal.length >= 4 ? uoOriginal.substring(0, 4) : (uoOriginal || "N/A");
+        let secChave = String(reg.UO || "").replace(/\D/g, '').substring(0, 4); 
+        if (!secChave) secChave = "N/A";
         let fonteChave = String(reg.Fonte || "N/A").trim();
 
         let chaveComposta = `${secChave}___${fonteChave}`;
-        if (!combinacoesUOFonte[chaveComposta]) {
-            combinacoesUOFonte[chaveComposta] = {
-                sec: secChave,
-                fonte: fonteChave,
-                valor: 0
-            };
-        }
+        if (!combinacoesUOFonte[chaveComposta]) combinacoesUOFonte[chaveComposta] = { sec: secChave, fonte: fonteChave, valor: 0 };
         combinacoesUOFonte[chaveComposta].valor += vReserva;
     });
 
-    // Ordenação hierárquica: 1º por Secretaria (UO 4 dígitos) e 2º por Fonte
     const listaCombinacoes = Object.values(combinacoesUOFonte).sort((a, b) => {
         const compSec = a.sec.localeCompare(b.sec, undefined, { numeric: true, sensitivity: 'base' });
         if (compSec !== 0) return compSec;
@@ -451,45 +470,37 @@ function atualizarPainelDashboard(dadosFiltrados) {
 
     let htmlCards = '';
     listaCombinacoes.forEach(item => {
+        let nomeSecretariaCard = obterNomeSecretaria(item.sec); 
         htmlCards += `
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <span class="kpi-secretaria">UO ${item.sec}</span>
+                    <span class="kpi-secretaria" title="${nomeSecretariaCard}">${nomeSecretariaCard}</span>
                     <span class="kpi-fonte-tag">Fonte ${item.fonte}</span>
                 </div>
                 <span class="kpi-title">Valor Reserva</span>
                 <span class="kpi-value">${formatarMoeda(item.valor)}</span>
-            </div>
-        `;
+            </div>`;
     });
 
     containerCards.innerHTML = htmlCards;
+    renderizarGrafico(dadosFiltrados); 
 }
 
 function renderizarTabela() {
     const tbody = document.getElementById('tabelaCorpo');
-    const tfoot = document.getElementById('tabelaRodapeSubtotal');
     const infoEl = document.getElementById('infoRegistros');
     const btnCarregarMais = document.getElementById('btnCarregarMais');
     
     if(!tbody) return;
 
-    if(tfoot) {
-        tfoot.innerHTML = '';
-    }
-
     const dadosFiltrados = obterDadosFiltrados();
 
     let somaValorReserva = 0;
-    dadosFiltrados.forEach(reg => {
-        somaValorReserva += converterParaNumero(reg.ValorReserva);
-    });
-    
+    dadosFiltrados.forEach(reg => { somaValorReserva += converterParaNumero(reg.ValorReserva); });
     const bannerVal = document.getElementById('bannerValorReserva');
     if (bannerVal) bannerVal.innerText = formatarMoeda(somaValorReserva);
 
     atualizarPainelDashboard(dadosFiltrados);
-
     tbody.innerHTML = '';
     
     if (bufferReservas.length === 0) {
@@ -507,11 +518,7 @@ function renderizarTabela() {
     }
 
     const totalRegistrosVisiveis = Math.min(dadosFiltrados.length, limiteLinhasExibidas);
-    
-    if (infoEl) {
-        infoEl.innerText = `Exibindo ${totalRegistrosVisiveis} de ${dadosFiltrados.length} registros encontrados`;
-        infoEl.style.color = "#64748b";
-    }
+    if (infoEl) infoEl.innerText = `Exibindo ${totalRegistrosVisiveis} de ${dadosFiltrados.length} registros encontrados`;
 
     for(let i = 0; i < totalRegistrosVisiveis; i++) {
         const reg = dadosFiltrados[i];
@@ -519,7 +526,8 @@ function renderizarTabela() {
         
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="col-acoes">
+            <td class="col-acoes" style="width: 100px; min-width: 100px;">
+                <button type="button" class="btn btn-info btn-sm btn-ver">Ficha</button>
                 <button type="button" class="btn btn-warning btn-sm btn-editar">Editar</button>
                 <button type="button" class="btn btn-danger btn-sm btn-excluir">Excluir</button>
             </td>
@@ -534,15 +542,13 @@ function renderizarTabela() {
             <td class="col-nao-saldo col-print-vlr-reserva col-valores" style="color: #6d28d9;">${formatarMoeda(reg.ValorReserva)}</td>
             <td class="col-nao-saldo col-print-fonte" style="text-align: center;">${reg.Fonte || ''}</td>
             <td class="col-nao-saldo col-valores">${formatarMoeda(reg.SaldoReserva)}</td>
-            <td class="col-saldo-atual col-print-sld-atual col-valores" style="color: #047857;">${formatarMoeda(reg.SaldoAtual)}</td>
+            <td class="col-saldo-atual col-print-sld-atual col-valores cor-saldo-atual">${formatarMoeda(reg.SaldoAtual)}</td>
             <td class="col-nao-saldo col-valores">${formatarMoeda(reg.ValorEmpenhado)}</td>
         `;
         
-        const btnEdit = tr.querySelector('.btn-editar');
-        const btnDel = tr.querySelector('.btn-excluir');
-        if(btnEdit) btnEdit.addEventListener('click', () => editarReserva(indexReal));
-        if(btnDel) btnDel.addEventListener('click', () => excluirReserva(indexReal));
-        
+        tr.querySelector('.btn-ver').addEventListener('click', () => abrirModalDetalhes(indexReal));
+        tr.querySelector('.btn-editar').addEventListener('click', () => editarReserva(indexReal));
+        tr.querySelector('.btn-excluir').addEventListener('click', () => excluirReserva(indexReal));
         tbody.appendChild(tr);
     }
 
@@ -551,12 +557,83 @@ function renderizarTabela() {
             const restantes = dadosFiltrados.length - totalRegistrosVisiveis;
             btnCarregarMais.innerText = `Carregar Mais (${Math.min(restantes, 50)} de ${restantes} restantes)`;
             btnCarregarMais.style.display = "inline-block";
-        } else {
-            btnCarregarMais.style.display = "none";
-        }
+        } else btnCarregarMais.style.display = "none";
     }
 }
 
+// ============== LÓGICA DO MODAL DE DETALHES (FICHA DA RESERVA) ==============
+function abrirModalDetalhes(index) {
+    const reg = bufferReservas[index];
+    const container = document.getElementById('conteudoDetalhes');
+    const uoNome = obterNomeSecretaria(reg.UO);
+    
+    // Configura uma tag para impressão focada
+    document.body.classList.add('imprimindo-ficha');
+    
+    container.innerHTML = `
+        <div class="detalhes-grid">
+            <div class="detalhe-item">
+                <span class="detalhe-label">Reserva N.º</span>
+                <span class="detalhe-valor" style="font-size: 18px; font-weight: 700; color: var(--primary);">${reg.Reserva || 'N/A'}</span>
+            </div>
+            <div class="detalhe-item">
+                <span class="detalhe-label">Data</span>
+                <span class="detalhe-valor">${reg.Data || 'N/A'}</span>
+            </div>
+            <div class="detalhe-item full-width">
+                <span class="detalhe-label">Secretaria / Unidade Orçamentária</span>
+                <span class="detalhe-valor">${uoNome}</span>
+            </div>
+            <div class="detalhe-item full-width">
+                <span class="detalhe-label">Histórico</span>
+                <span class="detalhe-valor">${reg.Historico || 'N/A'}</span>
+            </div>
+            
+            <div class="detalhe-item">
+                <span class="detalhe-label">Ficha</span>
+                <span class="detalhe-valor">${reg.Ficha || 'N/A'}</span>
+            </div>
+            <div class="detalhe-item">
+                <span class="detalhe-label">Fonte</span>
+                <span class="detalhe-valor">${reg.Fonte || 'N/A'}</span>
+            </div>
+            <div class="detalhe-item full-width">
+                <span class="detalhe-label">Processo</span>
+                <span class="detalhe-valor">${reg.Processo || 'N/A'}</span>
+            </div>
+            <div class="detalhe-item full-width">
+                <span class="detalhe-label">Natureza de Despesa</span>
+                <span class="detalhe-valor">${reg.NaturezaDespesa || 'N/A'}</span>
+            </div>
+            
+            <div class="detalhe-item">
+                <span class="detalhe-label">Valor Reserva</span>
+                <span class="detalhe-valor">${formatarMoeda(reg.ValorReserva)}</span>
+            </div>
+            <div class="detalhe-item">
+                <span class="detalhe-label">Valor Empenhado</span>
+                <span class="detalhe-valor">${formatarMoeda(reg.ValorEmpenhado)}</span>
+            </div>
+            <div class="detalhe-item">
+                <span class="detalhe-label">Saldo Reserva</span>
+                <span class="detalhe-valor">${formatarMoeda(reg.SaldoReserva)}</span>
+            </div>
+            <div class="detalhe-item">
+                <span class="detalhe-label">Saldo Atual da Ficha</span>
+                <span class="detalhe-valor destaque">${formatarMoeda(reg.SaldoAtual)}</span>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modalDetalhes').style.display = "flex";
+}
+
+function fecharModalDetalhes() {
+    document.body.classList.remove('imprimindo-ficha');
+    document.getElementById('modalDetalhes').style.display = "none";
+}
+
+// ============== LÓGICA DO MODAL DE FORMULÁRIO (EDIÇÃO) ==============
 function abrirModalNovaReserva() {
     document.getElementById('modalTitulo').innerText = "Nova Reserva";
     document.getElementById('editIndex').value = "-1";
@@ -576,37 +653,27 @@ function editarReserva(index) {
     const reg = bufferReservas[index];
     document.getElementById('modalTitulo').innerText = "Editar Reserva";
     document.getElementById('editIndex').value = index;
-    
     Object.keys(reg).forEach(key => {
         const input = document.getElementById('form_' + key);
         if(input && key !== 'Data') {
             input.value = reg[key];
-            if(['ValorEmpenhado', 'ValorReserva', 'SaldoReserva', 'SaldoAtual'].includes(key)){
-                aplicarMascaraMoeda(input);
-            }
+            if(['ValorEmpenhado', 'ValorReserva', 'SaldoReserva', 'SaldoAtual'].includes(key)) aplicarMascaraMoeda(input);
         }
     });
-
     const inputData = document.getElementById('form_Data');
     if (reg.Data && reg.Data.includes('/')) {
         const partes = reg.Data.split('/');
-        if (partes.length === 3) {
-            inputData.value = `${partes[2]}-${partes[1]}-${partes[0]}`;
-        }
+        if (partes.length === 3) inputData.value = `${partes[2]}-${partes[1]}-${partes[0]}`;
     }
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
     document.getElementById('modalFormulario').style.display = "flex";
 }
 
-function fecharModal() { 
-    document.getElementById('modalFormulario').style.display = "none"; 
-}
+function fecharModal() { document.getElementById('modalFormulario').style.display = "none"; }
 
 function salvarReserva() {
     const index = parseInt(document.getElementById('editIndex').value);
     const dataIso = document.getElementById('form_Data').value;
-    
     let dataFormatada = "";
     if (dataIso) {
         const partes = dataIso.split('-');
@@ -614,18 +681,12 @@ function salvarReserva() {
     }
 
     const novoRegistro = {
-        Data: dataFormatada, 
-        Reserva: document.getElementById('form_Reserva').value,
-        Historico: document.getElementById('form_Historico').value,
-        Ficha: document.getElementById('form_Ficha').value, 
-        UO: document.getElementById('form_UO').value,
-        NaturezaDespesa: document.getElementById('form_NaturezaDespesa').value, 
-        UE: document.getElementById('form_UE').value,
-        Processo: document.getElementById('form_Processo').value, 
-        ValorReserva: document.getElementById('form_ValorReserva').value,
-        Fonte: document.getElementById('form_Fonte').value, 
-        SaldoReserva: document.getElementById('form_SaldoReserva').value,
-        SaldoAtual: document.getElementById('form_SaldoAtual').value,
+        Data: dataFormatada, Reserva: document.getElementById('form_Reserva').value,
+        Historico: document.getElementById('form_Historico').value, Ficha: document.getElementById('form_Ficha').value, 
+        UO: document.getElementById('form_UO').value, NaturezaDespesa: document.getElementById('form_NaturezaDespesa').value, 
+        UE: document.getElementById('form_UE').value, Processo: document.getElementById('form_Processo').value, 
+        ValorReserva: document.getElementById('form_ValorReserva').value, Fonte: document.getElementById('form_Fonte').value, 
+        SaldoReserva: document.getElementById('form_SaldoReserva').value, SaldoAtual: document.getElementById('form_SaldoAtual').value,
         ValorEmpenhado: document.getElementById('form_ValorEmpenhado').value
     };
 
@@ -643,24 +704,12 @@ function excluirReserva(index) {
 function exportarExcel(apenasVisiveis) {
     if (!bufferReservas.length) return alert("Não há dados para exportar.");
     const dadosParaExportar = apenasVisiveis ? obterDadosFiltrados() : bufferReservas;
-    
-    const cabecalho = [
-        "Data", "Reserva", "Histórico", "Ficha", "UO", "Natureza Desp.", "UE", "Processo", 
-        "Valor Reserva", "Fonte", "Saldo Reserva", "Saldo Atual", "Valor Empenhado"
-    ];
-    
+    const cabecalho = ["Data", "Reserva", "Histórico", "Ficha", "UO", "Natureza Desp.", "UE", "Processo", "Valor Reserva", "Fonte", "Saldo Reserva", "Saldo Atual", "Valor Empenhado"];
     const dadosFinais = [cabecalho];
     dadosParaExportar.forEach(reg => {
-        dadosFinais.push([
-            reg.Data || "", reg.Reserva || "", reg.Historico || "", reg.Ficha || "",
-            reg.UO || "", reg.NaturezaDespesa || "", reg.UE || "", reg.Processo || "",
-            converterParaNumero(reg.ValorReserva), reg.Fonte || "", converterParaNumero(reg.SaldoReserva),
-            converterParaNumero(reg.SaldoAtual), converterParaNumero(reg.ValorEmpenhado)
-        ]);
+        dadosFinais.push([reg.Data || "", reg.Reserva || "", reg.Historico || "", reg.Ficha || "", reg.UO || "", reg.NaturezaDespesa || "", reg.UE || "", reg.Processo || "", converterParaNumero(reg.ValorReserva), reg.Fonte || "", converterParaNumero(reg.SaldoReserva), converterParaNumero(reg.SaldoAtual), converterParaNumero(reg.ValorEmpenhado)]);
     });
-
     const ws = XLSX.utils.aoa_to_sheet(dadosFinais);
-    
     for (let R = 1; R < dadosFinais.length; ++R) {
         const cellData = XLSX.utils.encode_cell({c: 0, r: R});
         if (ws[cellData]) {
@@ -668,20 +717,14 @@ function exportarExcel(apenasVisiveis) {
             const partes = String(ws[cellData].v).split('/');
             if (partes.length === 3) {
                 const d = new Date(partes[2], partes[1] - 1, partes[0]);
-                if (!isNaN(d)) {
-                    ws[cellData].v = d;
-                    ws[cellData].t = 'd';
-                }
+                if (!isNaN(d)) { ws[cellData].v = d; ws[cellData].t = 'd'; }
             }
         }
-
-        const colunasMonetarias = [8, 10, 11, 12];
-        colunasMonetarias.forEach(C => {
+        [8, 10, 11, 12].forEach(C => {
             const cell = XLSX.utils.encode_cell({c: C, r: R});
             if (ws[cell]) ws[cell].z = '"R$"#,##0.00;("R$"#,##0.00);"-"';
         });
     }
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reservas");
     XLSX.writeFile(wb, "Relatorio_Reservas.xlsx");
