@@ -1,5 +1,5 @@
 :root {
-    /* Cores Globais Inalteráveis */
+    /* Cores Globais */
     --primary: #4361ee;
     --primary-hover: #3a0ca3;
     --success: #2ec4b6;
@@ -87,7 +87,7 @@ body {
 /* LAYOUT LADO A LADO */
 .dashboard-layout { display: flex; gap: 20px; align-items: stretch; margin-bottom: 25px; }
 
-.dashboard-left { width: 440px; min-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+.dashboard-left { width: 480px; min-width: 480px; display: flex; flex-direction: column; gap: 20px; }
 
 .dashboard-panel {
     flex: 1; 
@@ -133,7 +133,7 @@ body {
     position: relative;
     flex-grow: 1;
     box-sizing: border-box;
-    min-height: 420px; 
+    min-height: 440px; 
 }
 
 @media(max-width: 1024px) {
@@ -265,19 +265,8 @@ body.dark-theme .form-section-title { color: #818cf8; }
 .date-input-container input { flex-grow: 1; }
 .btn-today { margin: 0; padding: 0 10px; font-size: 11px; }
 
-/* Grid da Ficha de Detalhes */
-.detalhes-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    font-size: 14px;
-}
-.detalhe-item {
-    background: var(--bg-panel);
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-}
+.detalhes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px; }
+.detalhe-item { background: var(--bg-panel); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
 .detalhe-item.full-width { grid-column: span 2; }
 .detalhe-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
 .detalhe-valor { display: block; font-size: 15px; font-weight: 500; color: var(--text-main); word-wrap: break-word; }
@@ -288,7 +277,6 @@ body.dark-theme .detalhe-valor.destaque { color: #10b981; }
     body { background: white; margin: 0; padding: 0; color: black; }
     .app-header, .top-sections, .col-acoes, .header-filter-row, h3, #btnCarregarMais { display: none !important; }
     
-    /* Na impressão da ficha, queremos esconder as outras coisas */
     body.imprimindo-ficha .container { display: none !important; }
     body.imprimindo-ficha .modal-overlay { position: static; display: block !important; background: transparent; }
     body.imprimindo-ficha .modal-content { box-shadow: none; width: 100%; border: none; }

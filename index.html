@@ -6,20 +6,25 @@
     <meta name="description" content="Página para consulta de Reservas Orçamentárias, Prefeitura de Botucatu">
     <meta name="author" content="Renato Pinheiro Destro">
     <title>Reservas Orçamentárias</title>
+    <!-- Importação do CSS Externo -->
     <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca SheetJS externa para ler/exportar Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Biblioteca Chart.js para o Gráfico de Barras Horizontais -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Plugin DataLabels para rótulos fixos no gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body>
 
 <header class="app-header">
     <div class="header-title-container">
-        <h1>Departamento de Planejamento e Orçamento >> Consulta Reservas</h1>
+        <h1>Departamento de Planejamento e Orçamento >> Módulo Reservas</h1>
     </div>
     <div class="header-actions">
         <!-- BOTÃO DE MODO ESCURO -->
         <button type="button" id="btnDarkMode" class="btn-theme-toggle" title="Alternar tema">🌙 Escuro</button>
-        <div class="header-subtitle">V2.4</div>
+        <div class="header-subtitle">V2.5</div>
     </div>
 </header>
 

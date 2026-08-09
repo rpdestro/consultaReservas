@@ -45,9 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btnLimparFiltros').addEventListener('click', limparFiltros);
     document.getElementById('btnLimparDados').addEventListener('click', limparDadosCarregados);
     document.getElementById('btnExportar').addEventListener('click', () => exportarExcel(true));
-    document.getElementById('btnImprimir').addEventListener('click', () => window.print());
+    document.getElementById('btnImprimir').addEventListener('click', executarImpressaoOtimizada);
     
-    // Modais
     document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
     document.getElementById('btnCancelarModal').addEventListener('click', fecharModal);
     document.getElementById('btnFecharDetalhes').addEventListener('click', fecharModalDetalhes);
@@ -78,28 +77,40 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Lógica do MODO ESCURO
     const btnDark = document.getElementById('btnDarkMode');
     btnDark.addEventListener('click', () => {
         document.body.classList.toggle('dark-theme');
         const isDark = document.body.classList.contains('dark-theme');
         btnDark.innerText = isDark ? '☀️ Claro' : '🌙 Escuro';
         
-        // Atualizar cores do gráfico se ele estiver renderizado
         if (graficoInstancia) {
             graficoInstancia.options.plugins.title.color = isDark ? '#f8fafc' : '#1e293b';
-            graficoInstancia.options.plugins.legend.labels.color = isDark ? '#cbd5e1' : '#64748b';
+            graficoInstancia.options.scales.x.ticks.color = isDark ? '#cbd5e1' : '#64748b';
+            graficoInstancia.options.scales.y.ticks.color = isDark ? '#f8fafc' : '#334155';
+            graficoInstancia.options.plugins.datalabels.color = isDark ? '#cbd5e1' : '#475569';
             graficoInstancia.update();
         }
     });
 });
 
+function executarImpressaoOtimizada() {
+    const dadosFiltrados = obterDadosFiltrados();
+    if (!dadosFiltrados || dadosFiltrados.length === 0) return alert("Não há dados para imprimir.");
+
+    const limiteAnterior = limiteLinhasExibidas;
+    limiteLinhasExibidas = dadosFiltrados.length;
+    renderizarTabela();
+
+    setTimeout(() => {
+        window.print();
+        limiteLinhasExibidas = limiteAnterior;
+        renderizarTabela();
+    }, 50);
+}
+
 function aplicarMascaraMoeda(input) {
     let valor = input.value.replace(/\D/g, "");
-    if (valor === "") {
-        input.value = "";
-        return;
-    }
+    if (valor === "") { input.value = ""; return; }
     valor = (parseFloat(valor) / 100).toFixed(2);
     input.value = valor.replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
@@ -372,6 +383,7 @@ function limparDadosCarregados() {
     }
 }
 
+// ============== RENDERIZAÇÃO DO GRÁFICO DE BARRAS COM DATALABELS ==============
 function renderizarGrafico(dadosFiltrados) {
     const ctx = document.getElementById('graficoReservas');
     if (!ctx) return;
@@ -390,32 +402,59 @@ function renderizarGrafico(dadosFiltrados) {
         totalFiltrado += valor;
     });
 
-    const labels = Object.keys(agrupamentoUO).map(uo => obterNomeSecretaria(uo));
-    const valores = Object.values(agrupamentoUO);
+    const ordenado = Object.entries(agrupamentoUO).sort((a, b) => b[1] - a[1]);
+    const labels = ordenado.map(item => obterNomeSecretaria(item[0]));
+    const valores = ordenado.map(item => item[1]);
     const isDark = document.body.classList.contains('dark-theme');
+    
+    const paletaCores = [
+        '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', 
+        '#2ec4b6', '#ff9f1c', '#e71d36', '#fb8500', '#06d6a0', 
+        '#118ab2', '#073b4c', '#8338ec', '#ff006e', '#8ac926', 
+        '#1982c4', '#6a4c93', '#ff595e', '#ffca3a', '#10002b'
+    ];
 
+    // Cria a nova instância incluindo o Plugin ChartDataLabels
     graficoInstancia = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
+        plugins: [ChartDataLabels], // <-- Importação do plugin local
         data: {
             labels: labels,
             datasets: [{
-                label: 'Valor', data: valores,
-                backgroundColor: ['#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', '#2ec4b6', '#ff9f1c', '#e71d36', '#fb8500', '#06d6a0', '#118ab2', '#073b4c'],
-                borderWidth: 1, hoverOffset: 6
+                label: 'Valor Reserva',
+                data: valores,
+                backgroundColor: paletaCores,
+                borderRadius: 6,
+                barThickness: 16
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            layout: { padding: { top: 5, bottom: 15 } },
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            // Aumentado o padding direito para dar espaço para o texto do rótulo
+            layout: { padding: { top: 10, right: 65, bottom: 10, left: 10 } },
             plugins: {
-                legend: { 
-                    position: 'bottom', 
-                    labels: { color: isDark ? '#cbd5e1' : '#64748b', font: { size: 10, family: "'Segoe UI', sans-serif" }, boxWidth: 12, padding: 8 } 
+                legend: { display: false },
+                // Configuração visual dos DataLabels nas pontas das barras
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    color: isDark ? '#cbd5e1' : '#475569',
+                    font: { size: 10, weight: '700' },
+                    formatter: function(value) {
+                        if (value >= 1000000) {
+                            return 'R$ ' + (value / 1000000).toFixed(1).replace('.', ',') + 'M';
+                        } else if (value >= 1000) {
+                            return 'R$ ' + (value / 1000).toFixed(1).replace('.', ',') + 'k';
+                        }
+                        return 'R$ ' + value.toLocaleString('pt-BR');
+                    }
                 },
                 tooltip: {
                     callbacks: {
                         label: function(c) {
-                            let pct = ((c.raw / totalFiltrado) * 100).toFixed(1);
+                            let pct = totalFiltrado > 0 ? ((c.raw / totalFiltrado) * 100).toFixed(1) : "0.0";
                             let val = c.raw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                             return ` ${val} (${pct}%)`;
                         }
@@ -426,7 +465,26 @@ function renderizarGrafico(dadosFiltrados) {
                     text: 'Distribuição do Valor de Reserva por Secretaria', 
                     color: isDark ? '#f8fafc' : '#1e293b',
                     font: { size: 13, weight: '600' }, 
-                    padding: { bottom: 20 } 
+                    padding: { bottom: 15 } 
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: isDark ? '#334155' : '#f1f5f9' },
+                    ticks: {
+                        color: isDark ? '#cbd5e1' : '#64748b',
+                        font: { size: 10 },
+                        callback: function(v) {
+                            return 'R$ ' + (v / 1000).toLocaleString('pt-BR') + 'k';
+                        }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        color: isDark ? '#f8fafc' : '#334155',
+                        font: { size: 11, weight: '600' }
+                    }
                 }
             }
         }
@@ -561,13 +619,11 @@ function renderizarTabela() {
     }
 }
 
-// ============== LÓGICA DO MODAL DE DETALHES (FICHA DA RESERVA) ==============
 function abrirModalDetalhes(index) {
     const reg = bufferReservas[index];
     const container = document.getElementById('conteudoDetalhes');
     const uoNome = obterNomeSecretaria(reg.UO);
     
-    // Configura uma tag para impressão focada
     document.body.classList.add('imprimindo-ficha');
     
     container.innerHTML = `
@@ -633,7 +689,6 @@ function fecharModalDetalhes() {
     document.getElementById('modalDetalhes').style.display = "none";
 }
 
-// ============== LÓGICA DO MODAL DE FORMULÁRIO (EDIÇÃO) ==============
 function abrirModalNovaReserva() {
     document.getElementById('modalTitulo').innerText = "Nova Reserva";
     document.getElementById('editIndex').value = "-1";
