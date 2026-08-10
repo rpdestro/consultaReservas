@@ -16,6 +16,7 @@ const dicionarioUO = {
     "0210": "FUNDO ASSIST. SOCIAL",
     "0211": "CULTURA",
     "0212": "INFRAESTRUTURA",
+    "0221": "ENCARGOS GERAIS",
     "0232": "PROCURADORIA",
     "0234": "DESENVOLVIMENTO",
     "0235": "ZELADORIA",
@@ -87,7 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
             graficoInstancia.options.plugins.title.color = isDark ? '#f8fafc' : '#1e293b';
             graficoInstancia.options.scales.x.ticks.color = isDark ? '#cbd5e1' : '#64748b';
             graficoInstancia.options.scales.y.ticks.color = isDark ? '#f8fafc' : '#334155';
-            graficoInstancia.options.plugins.datalabels.color = isDark ? '#cbd5e1' : '#475569';
+            if (graficoInstancia.options.plugins.datalabels) {
+                graficoInstancia.options.plugins.datalabels.color = isDark ? '#cbd5e1' : '#475569';
+            }
             graficoInstancia.update();
         }
     });
@@ -383,30 +386,37 @@ function limparDadosCarregados() {
     }
 }
 
-// ============== RENDERIZAÇÃO DO GRÁFICO DE BARRAS COM DATALABELS ==============
+// ============== RENDERIZAÇÃO DO GRÁFICO (BARRAS SIMPLES COM AUTO-SKIP FALSE E DATALABELS EXTERNOS) ==============
 function renderizarGrafico(dadosFiltrados) {
     const ctx = document.getElementById('graficoReservas');
     if (!ctx) return;
     if (graficoInstancia) graficoInstancia.destroy();
     if (!dadosFiltrados || dadosFiltrados.length === 0) return;
 
-    const agrupamentoUO = {};
+    const uoTotais = {}; 
     let totalFiltrado = 0;
 
+    // Processamento dos dados agrupados apenas por Secretaria (UO)
     dadosFiltrados.forEach(reg => {
         let uo = String(reg.UO || "").replace(/\D/g, '').substring(0, 4);
         if (!uo) uo = "N/A";
         let valor = converterParaNumero(reg.ValorReserva);
-        if (!agrupamentoUO[uo]) agrupamentoUO[uo] = 0;
-        agrupamentoUO[uo] += valor;
+
+        if (!uoTotais[uo]) uoTotais[uo] = 0;
+        uoTotais[uo] += valor;
         totalFiltrado += valor;
     });
 
-    const ordenado = Object.entries(agrupamentoUO).sort((a, b) => b[1] - a[1]);
-    const labels = ordenado.map(item => obterNomeSecretaria(item[0]));
-    const valores = ordenado.map(item => item[1]);
+    // Filtra apenas as UOs que possuem valor > 0
+    const uosValidas = Object.keys(uoTotais).filter(uo => uoTotais[uo] > 0);
+
+    // Ordenar UOs da maior para a menor
+    const uosOrdenadas = uosValidas.sort((a, b) => uoTotais[b] - uoTotais[a]);
+    const labels = uosOrdenadas.map(uo => obterNomeSecretaria(uo));
+    const valores = uosOrdenadas.map(uo => uoTotais[uo]);
     const isDark = document.body.classList.contains('dark-theme');
     
+    // Paleta de cores moderna para as barras
     const paletaCores = [
         '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', 
         '#2ec4b6', '#ff9f1c', '#e71d36', '#fb8500', '#06d6a0', 
@@ -414,10 +424,9 @@ function renderizarGrafico(dadosFiltrados) {
         '#1982c4', '#6a4c93', '#ff595e', '#ffca3a', '#10002b'
     ];
 
-    // Cria a nova instância incluindo o Plugin ChartDataLabels
     graficoInstancia = new Chart(ctx, {
         type: 'bar',
-        plugins: [ChartDataLabels], // <-- Importação do plugin local
+        plugins: [ChartDataLabels],
         data: {
             labels: labels,
             datasets: [{
@@ -429,14 +438,13 @@ function renderizarGrafico(dadosFiltrados) {
             }]
         },
         options: {
-            indexAxis: 'y',
+            indexAxis: 'y', // Define o gráfico como BARRAS HORIZONTAIS
             responsive: true,
             maintainAspectRatio: false,
             // Aumentado o padding direito para dar espaço para o texto do rótulo
             layout: { padding: { top: 10, right: 65, bottom: 10, left: 10 } },
             plugins: {
-                legend: { display: false },
-                // Configuração visual dos DataLabels nas pontas das barras
+                legend: { display: false }, // Sem legenda inferior (não está empilhado)
                 datalabels: {
                     anchor: 'end',
                     align: 'end',
@@ -482,8 +490,9 @@ function renderizarGrafico(dadosFiltrados) {
                 y: {
                     grid: { display: false },
                     ticks: {
+                        autoSkip: false, // <-- GARANTE QUE NENHUMA SECRETARIA SEJA ESCONDIDA
                         color: isDark ? '#f8fafc' : '#334155',
-                        font: { size: 11, weight: '600' }
+                        font: { size: 10, weight: '600' }
                     }
                 }
             }
