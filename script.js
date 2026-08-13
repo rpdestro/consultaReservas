@@ -635,57 +635,65 @@ function abrirModalDetalhes(index) {
     
     document.body.classList.add('imprimindo-ficha');
     
+    // Ficha gerada
     container.innerHTML = `
-        <div class="detalhes-grid">
-            <div class="detalhe-item">
-                <span class="detalhe-label">Reserva N.º</span>
-                <span class="detalhe-valor" style="font-size: 18px; font-weight: 700; color: var(--primary);">${reg.Reserva || 'N/A'}</span>
+        <div class="ficha-print-container">
+            <div class="ficha-header">
+                <img src="logo.png" alt="Prefeitura Municipal" class="ficha-logo" onerror="this.style.display='none'">
             </div>
-            <div class="detalhe-item">
-                <span class="detalhe-label">Data</span>
-                <span class="detalhe-valor">${reg.Data || 'N/A'}</span>
-            </div>
-            <div class="detalhe-item full-width">
-                <span class="detalhe-label">Secretaria / Unidade Orçamentária</span>
-                <span class="detalhe-valor">${uoNome}</span>
-            </div>
-            <div class="detalhe-item full-width">
-                <span class="detalhe-label">Histórico</span>
-                <span class="detalhe-valor">${reg.Historico || 'N/A'}</span>
-            </div>
+            <div class="ficha-titulo">Ficha de Reserva Orçamentária</div>
             
-            <div class="detalhe-item">
-                <span class="detalhe-label">Ficha</span>
-                <span class="detalhe-valor">${reg.Ficha || 'N/A'}</span>
-            </div>
-            <div class="detalhe-item">
-                <span class="detalhe-label">Fonte</span>
-                <span class="detalhe-valor">${reg.Fonte || 'N/A'}</span>
-            </div>
-            <div class="detalhe-item full-width">
-                <span class="detalhe-label">Processo</span>
-                <span class="detalhe-valor">${reg.Processo || 'N/A'}</span>
-            </div>
-            <div class="detalhe-item full-width">
-                <span class="detalhe-label">Natureza de Despesa</span>
-                <span class="detalhe-valor">${reg.NaturezaDespesa || 'N/A'}</span>
-            </div>
-            
-            <div class="detalhe-item">
-                <span class="detalhe-label">Valor Reserva</span>
-                <span class="detalhe-valor">${formatarMoeda(reg.ValorReserva)}</span>
-            </div>
-            <div class="detalhe-item">
-                <span class="detalhe-label">Valor Empenhado</span>
-                <span class="detalhe-valor">${formatarMoeda(reg.ValorEmpenhado)}</span>
-            </div>
-            <div class="detalhe-item">
-                <span class="detalhe-label">Saldo Reserva</span>
-                <span class="detalhe-valor">${formatarMoeda(reg.SaldoReserva)}</span>
-            </div>
-            <div class="detalhe-item">
-                <span class="detalhe-label">Saldo Atual da Ficha</span>
-                <span class="detalhe-valor destaque">${formatarMoeda(reg.SaldoAtual)}</span>
+            <div class="detalhes-grid">
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Reserva N.º</span>
+                    <span class="detalhe-valor" style="font-size: 20px; font-weight: 800; color: var(--primary);">${reg.Reserva || 'N/A'}</span>
+                </div>
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Data</span>
+                    <span class="detalhe-valor">${reg.Data || 'N/A'}</span>
+                </div>
+                <div class="detalhe-item full-width">
+                    <span class="detalhe-label">Secretaria / Unidade Orçamentária</span>
+                    <span class="detalhe-valor">${uoNome}</span>
+                </div>
+                <div class="detalhe-item full-width">
+                    <span class="detalhe-label">Histórico</span>
+                    <span class="detalhe-valor">${reg.Historico || 'N/A'}</span>
+                </div>
+                
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Ficha</span>
+                    <span class="detalhe-valor">${reg.Ficha || 'N/A'}</span>
+                </div>
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Fonte</span>
+                    <span class="detalhe-valor">${reg.Fonte || 'N/A'}</span>
+                </div>
+                <div class="detalhe-item full-width">
+                    <span class="detalhe-label">Processo</span>
+                    <span class="detalhe-valor">${reg.Processo || 'N/A'}</span>
+                </div>
+                <div class="detalhe-item full-width">
+                    <span class="detalhe-label">Natureza de Despesa</span>
+                    <span class="detalhe-valor">${reg.NaturezaDespesa || 'N/A'}</span>
+                </div>
+                
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Valor Reserva</span>
+                    <span class="detalhe-valor">${formatarMoeda(reg.ValorReserva)}</span>
+                </div>
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Valor Empenhado</span>
+                    <span class="detalhe-valor">${formatarMoeda(reg.ValorEmpenhado)}</span>
+                </div>
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Saldo Reserva</span>
+                    <span class="detalhe-valor">${formatarMoeda(reg.SaldoReserva)}</span>
+                </div>
+                <div class="detalhe-item">
+                    <span class="detalhe-label">Saldo Atual da Ficha</span>
+                    <span class="detalhe-valor destaque">${formatarMoeda(reg.SaldoAtual)}</span>
+                </div>
             </div>
         </div>
     `;
