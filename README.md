@@ -2,6 +2,8 @@
 
 O **Sistema de Consulta de Reservas Orçamentárias** é uma aplicação web focada na extração, visualização e análise de dados financeiros. Seu principal objetivo é importar planilhas de sistemas de gestão pública e permitir a consulta dinâmica das reservas, aplicando filtros múltiplos e exibindo os valores sumarizados por Secretaria (Unidade Orçamentária - UO), Fonte de Recurso, Processo, entre outros.
 
+## 
+
 ## 🚀 Funcionalidades
 
 O sistema foi projetado para exibir as reservas de forma clara e organizada, transformando planilhas densas em painéis executivos interativos. As principais funcionalidades incluem:
@@ -11,6 +13,8 @@ O sistema foi projetado para exibir as reservas de forma clara e organizada, tra
 * **Dashboard Visual:** Renderização de um gráfico de barras horizontais e cards totalizadores (KPIs) com o somatório dos valores em tempo real, organizados hierarquicamente.
 * **Modo de Impressão:** Geração de uma "Ficha de Reserva" estruturada e otimizada visualmente para impressão física ou arquivamento em PDF.
 * **Exportação:** Exportação dos dados filtrados de volta para o formato Excel.
+
+## 
 
 ## 💻 Tecnologias Utilizadas
 
@@ -24,6 +28,8 @@ A aplicação mantém uma arquitetura intencionalmente "Client-Side" (processame
   * *SheetJS (`xlsx.full.min.js`):* Para manipulação e conversão dos binários do Excel.
   * *Chart.js \& ChartDataLabels:* Para a construção do gráfico analítico.
 
+## 
+
 ## ⚙️ Pré-requisitos e Instalação
 
 A grande vantagem arquitetural deste projeto é que ele roda nativamente em qualquer *browser* moderno. Não há necessidade de configurar ambientes (como Node.js, Apache ou bancos de dados).
@@ -33,6 +39,8 @@ A grande vantagem arquitetural deste projeto é que ele roda nativamente em qual
 1. Realize o download ou clone este repositório para sua máquina local.
 2. Certifique-se de que os três arquivos principais estejam na mesma pasta.
 3. Dê um duplo clique no arquivo `index.html` para abri-lo imediatamente no navegador web de sua preferência (Google Chrome, Edge, Firefox, etc.).
+
+## 
 
 ## 📁 Estrutura de Pastas
 
@@ -48,6 +56,8 @@ Para manter a simplicidade e facilitar a manutenção, os recursos do sistema es
 
 
 
+## 
+
 ## 👨‍💻 Autor:
 
 Renato Pinheiro Destro
@@ -58,5 +68,5 @@ Auxiliar de Escritório / Prefeitura do Município de Botucatu/SP
 
 
 
-Seja LIVRE, use Linux!
+###### Seja LIVRE, use Linux!
 
