@@ -48,13 +48,15 @@ Para manter a simplicidade e facilitar a manutenção, os recursos do sistema es
 
 
 
-/
+└── /consultaReservas
 
-├── index.html   # Ponto de entrada da aplicação, contendo o esqueleto da interface e chamadas das bibliotecas.
-├── style.css    # Arquivo de estilos responsável por toda a interface gráfica e formatação de impressão.
-└── script.js    # Motor da aplicação, contém o dicionário de Unidades Orçamentárias, a lógica de renderização e as regras de filtragem.
+&#x20;   ├── index.html   # Ponto de entrada da aplicação, contendo o esqueleto da interface e chamadas das bibliotecas.
+    ├── style.css    # Arquivo de estilos responsável por toda a interface gráfica e formatação de impressão.
+    ├── script.js    # Motor da aplicação, contém o dicionário de Unidades Orçamentárias, a lógica de renderização e as regras de filtragem.
 
+&#x20;   ├── logo.png     # Logotipo utilizado no cabeçalho dos relatórios oficiais.
 
+&#x20;   └── README.md    # Documentação do projeto.	
 
 ## 
 
