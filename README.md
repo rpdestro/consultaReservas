@@ -50,11 +50,14 @@ Para manter a simplicidade e facilitar a manutenção, os recursos do sistema es
 
 ```text
 /consultaReservas
-  ├── index.html    # Ponto de entrada da aplicação, contendo o esqueleto da interface e chamadas das bibliotecas.
-  ├── style.css     # Arquivo de estilos responsável por toda a interface gráfica e formatação de impressão.
-  ├── script.js     # Motor da aplicação, contém o dicionário de Unidades Orçamentárias, a lógica de renderização e as regras de filtragem.
-  ├── logo.png      # Logotipo utilizado no cabeçalho dos relatórios oficiais.
-  └── README.md     # Documentação do projeto.
+    ├── index.html    # Ponto de entrada da aplicação, contendo o esqueleto da interface e chamadas
+    ├                   das bibliotecas.
+    ├── style.css     # Arquivo de estilos responsável por toda a interface gráfica e formatação de
+    ├                   impressão.
+    ├── script.js     # Motor da aplicação, contém o dicionário de Unidades Orçamentárias, a lógica
+    ├                   de renderização e as regras de filtragem.
+    ├── logo.png      # Logotipo utilizado no cabeçalho dos relatórios oficiais.
+    └── README.md     # Documentação do projeto.
 ```
 
 ## 
@@ -62,7 +65,9 @@ Para manter a simplicidade e facilitar a manutenção, os recursos do sistema es
 ## 👨‍💻 Autor:
 
 Renato Pinheiro Destro
+##
 renato.destro@gmail.com
+##
 Auxiliar de Escritório / Prefeitura Municipal de Botucatu/SP
 
 ###### Seja LIVRE, use Linux!
