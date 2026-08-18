@@ -65,9 +65,11 @@ Para manter a simplicidade e facilitar a manutenção, os recursos do sistema es
 ## 👨‍💻 Autor:
 
 Renato Pinheiro Destro
-##
+
 renato.destro@gmail.com
-##
+
 Auxiliar de Escritório / Prefeitura Municipal de Botucatu/SP
 
-###### Seja LIVRE, use Linux!
+Seja LIVRE, use Linux!
+
+##
